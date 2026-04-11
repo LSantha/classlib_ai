@@ -22,11 +22,30 @@ jobs:
       - name: Make build script executable
         run: chmod +x ./build.sh || true
 
+      - name: Check if release already exists
+        id: check_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # derive tag name from ref
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Checking for existing release for tag: $TAG"
+          if curl -sf -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/$TAG" >/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release for $TAG already exists; CI will skip publishing."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No existing release for $TAG; CI will publish."
+          fi
+
       - name: Build artifacts
+        if: steps.check_release.outputs.exists == 'false'
         # Pass -Djava.runtime.version=1.6 to satisfy legacy Ant java version check
         run: ./build.sh -Djava.runtime.version=1.6 classlib-pack classlib-src-bz
 
       - name: Generate MD5 checksums
+        if: steps.check_release.outputs.exists == 'false'
         run: |
           set -e
           ART_DIR=all/build
@@ -37,6 +56,7 @@ jobs:
           done
 
       - name: Create GitHub Release and upload assets
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           files: |
