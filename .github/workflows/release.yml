@@ -1,0 +1,48 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'classlib-*'
+
+jobs:
+  publish:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Make build script executable
+        run: chmod +x ./build.sh || true
+
+      - name: Build artifacts
+        # Pass -Djava.runtime.version=1.6 to satisfy legacy Ant java version check
+        run: ./build.sh -Djava.runtime.version=1.6 classlib-pack classlib-src-bz
+
+      - name: Generate MD5 checksums
+        run: |
+          set -e
+          ART_DIR=all/build
+          for f in classlib.pack.gz classlib-src.jar.bz2; do
+            if [ -f "${ART_DIR}/${f}" ]; then
+              md5sum "${ART_DIR}/${f}" | awk '{print $1}' > "${ART_DIR}/${f}.md5"
+            fi
+          done
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            all/build/classlib.pack.gz
+            all/build/classlib.pack.gz.md5
+            all/build/classlib-src.jar.bz2
+            all/build/classlib-src.jar.bz2.md5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
