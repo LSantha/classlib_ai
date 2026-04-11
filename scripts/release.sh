@@ -45,7 +45,7 @@ if [ -z "$TAG" ] || [ "$TAG" = "auto" ]; then
         if [ "$n" -gt "$max" ] 2>/dev/null; then
           max=$n
         fi
-      ;;
+        ;;
     esac
   done
   next=$((max + 1))
@@ -61,6 +61,37 @@ fi
 
 command -v gh >/dev/null 2>&1 || { echo "gh (GitHub CLI) is required. Install: https://cli.github.com/"; exit 1; }
 command -v git >/dev/null 2>&1 || { echo "git required"; exit 1; }
+
+# Detect repository from git remote (supports both SSH and HTTPS URLs)
+REPO_REMOTE=""
+GH_REPO_FLAG=""
+for remote in origin upstream; do
+  remote_url=$(git remote get-url "$remote" 2>/dev/null) || continue
+  # Strip .git suffix and extract owner/repo from SSH (git@github.com:owner/repo.git) or HTTPS (https://github.com/owner/repo.git) URLs
+  case "$remote_url" in
+    git@github.com:*)
+      repo_path=$(echo "$remote_url" | sed 's|git@github.com:||' | sed 's|\.git$||')
+      ;;
+    https://github.com/*)
+      repo_path=$(echo "$remote_url" | sed 's|https://github.com/||' | sed 's|\.git$||')
+      ;;
+    http://github.com/*)
+      repo_path=$(echo "$remote_url" | sed 's|http://github.com/||' | sed 's|\.git$||')
+      ;;
+    *) continue ;;
+  esac
+  # Validate format (owner/repo)
+  if echo "$repo_path" | grep -qE '^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+$'; then
+    REPO_REMOTE="$repo_path"
+    GH_REPO_FLAG="-R $REPO_REMOTE"
+    echo "Detected repository: $REPO_REMOTE"
+    break
+  fi
+done
+
+if [ -z "$REPO_REMOTE" ]; then
+  echo "Warning: Could not detect repository from git remote; gh will use default or require -R flag"
+fi
 
 # ensure clean working tree
 if [ -n "$(git status --porcelain)" ]; then
@@ -118,7 +149,7 @@ for f in ${ARTS}; do
 done
 
 if [ "$DRY_RUN" = true ]; then
-  echo "DRY RUN: gh release create $TAG --title $TAG --notes 'Release $TAG' ${ARTS}";
+  echo "DRY RUN: gh release create $GH_REPO_FLAG $TAG --title $TAG --notes 'Release $TAG' ${ARTS}";
   exit 0
 fi
 
@@ -139,6 +170,6 @@ if [ -z "$UPLOAD_ARGS" ]; then
   exit 1
 fi
 
-gh release create "$TAG" --title "$TAG" --notes "Release $TAG" $UPLOAD_ARGS
+gh release create $GH_REPO_FLAG "$TAG" --title "$TAG" --notes "Release $TAG" $UPLOAD_ARGS
 
 echo "Release $TAG published."
