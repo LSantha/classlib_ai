@@ -48,11 +48,16 @@ What the script does
 - Creates an annotated tag and pushes it to `origin` (unless `--dry-run`).
 - Builds artifacts via the project's Ant build (`./build.sh` with -Djava.runtime.version=1.6 to satisfy the legacy check).
 - Generates per-artifact MD5 checksum files (e.g. `classlib.pack.gz.md5`) and uploads both artifacts and checksum files to the GitHub Release.
+- Creates an annotated tag and pushes it to `origin` (unless `--dry-run`). By default the script also creates the GitHub Release locally; the CI workflow includes a pre-check and will skip publishing if a release for the pushed tag already exists. This prevents duplicate releases when you run the local script.
+- Builds artifacts via the project's Ant build (`./build.sh` with -Djava.runtime.version=1.6 to satisfy the legacy check).
+- Generates per-artifact MD5 checksum files (e.g. `classlib.pack.gz.md5`) and uploads both artifacts and checksum files to the GitHub Release.
 
 CI-based release
 -----------------
 - The repository includes a GitHub Actions workflow that runs on tag push. It builds the artifacts and publishes a GitHub Release with the artifacts and their `.md5` checksum files.
 - The workflow is triggered on tags matching `classlib-*`.
+- The workflow is triggered on tags matching `classlib-*`.
+- The workflow first checks whether a GitHub Release already exists for the tag; if it does, the job will skip building and publishing. This allows local release creation (script) to be the authoritative publish step when desired.
 
 Artifacts and integrity data
 ----------------------------
@@ -78,6 +83,8 @@ Troubleshooting
 ---------------
 - "Working tree not clean" — commit or stash changes before running the script.
 - Tag push fails because tag already exists remotely — this can happen if someone else pushed a tag concurrently. Re-run the script (it will compute the next sequence) or provide an explicit tag.
+- Tag push fails because tag already exists remotely — this can happen if someone else pushed a tag concurrently. Re-run the script (it will compute the next sequence) or provide an explicit tag.
+- CI skipped publishing because a release already exists for the pushed tag — this is expected behavior when the release was created locally before the tag push (the workflow checks for existing releases and avoids duplicate publishes).
 - CI didn't run for my tag — ensure your tag matches `classlib-*` or update the workflow triggers if you prefer a different pattern.
 
 Extending or changing the workflow
