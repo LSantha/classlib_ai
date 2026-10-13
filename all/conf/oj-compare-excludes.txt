@@ -1,0 +1,43 @@
+# Exclusion list for the oj-compare / cp-compare reports
+# (CompareTask 'excludesfile' attribute, all/build.xml).
+#
+# Upstream-only files matching these patterns are hidden from the report
+# instead of showing up as "missing in vm" rows. Use this for APIs that
+# were INTENTIONALLY removed from the classlib and must never be
+# re-synced - currently everything CORBA, removed because the whole
+# java.corba module (org.omg.*, javax.rmi.CORBA, com.sun.corba.*, ...)
+# was dropped from the classlib.
+#
+# Two granularities are supported; patterns use '/' separators and match
+# the tree-relative file names (e.g. com/sun/corba/...):
+#
+#   package granularity : org/omg/**
+#   per-class granularity : javax/rmi/PortableRemoteObject.java
+#
+# Rules the task enforces:
+# - exclusions apply ONLY to upstream-missing rows ("missing in vm").
+#   Files present in the JNode tree are always compared and reported
+#   normally, so an accidentally resurrected file still shows up
+#   (as "missing in openjdk").
+# - keep patterns tight: siblings that are KEPT must keep comparing,
+#   e.g. javax/rmi/ssl/** is NOT covered by javax/rmi/CORBA/** below.
+#
+# --- CORBA removal: package granularity ---
+org/omg/**
+com/sun/corba/**
+com/sun/tools/corba/**
+com/sun/org/omg/**
+com/sun/pept/**
+com/sun/jndi/cosnaming/**
+com/sun/jndi/toolkit/corba/**
+com/sun/jndi/url/corbaname/**
+com/sun/jndi/url/iiop/**
+com/sun/jndi/url/iiopname/**
+sun/corba/**
+sun/rmi/rmic/iiop/**
+javax/activity/**
+javax/rmi/CORBA/**
+# --- CORBA removal: per-class granularity ---
+javax/rmi/PortableRemoteObject.java
+com/sun/jmx/remote/internal/ProxyInputStream.java
+javax/management/remote/rmi/RMIIIOPServerImpl.java

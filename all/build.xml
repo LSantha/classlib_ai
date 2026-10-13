@@ -469,7 +469,8 @@ clean             Remove all intermediate build results.
             </patternset>
 
             <delete dir="${build.dir}/openjdk-compare"/>
-            <cp-compare destdir="${build.dir}/openjdk-compare" type="openjdk">
+            <cp-compare destdir="${build.dir}/openjdk-compare" type="openjdk"
+                excludesfile="${root.dir}/all/conf/oj-compare-excludes.txt">
                 <vmsources>
                     <fileset dir="${root.dir}/core/src/openjdk/com">
                         <patternset refid="cp-includes-pattern"/>
@@ -510,6 +511,11 @@ clean             Remove all intermediate build results.
                         <patternset refid="cp-includes-pattern"/>
                         <patternset refid="cp-sources-pattern"/>
                     </fileset>
+                    <!-- CORBA was removed from the classlib (org.omg.*,
+                         com.sun.corba.*, javax.rmi.CORBA, ...). Keep the
+                         upstream corba sources in the comparison so that
+                         any resurrected file shows up as 'openjdk-only'
+                         instead of slipping back in unnoticed. -->
                     <fileset dir="${main.openjdk.dir}/corba/src/share/classes/">
                         <patternset refid="cp-includes-pattern"/>
                         <patternset refid="cp-sources-pattern"/>

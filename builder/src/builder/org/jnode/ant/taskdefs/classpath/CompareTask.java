@@ -67,6 +67,17 @@ public class CompareTask extends Task {
 
     private String type;
 
+    // Ant-style path patterns (relative names with '/' separators, e.g.
+    // "org/omg/**" for a package or "javax/rmi/PortableRemoteObject.java"
+    // for a single class) loaded from the 'excludesfile' attribute.
+    // Upstream-only files matching one of these patterns are intentionally
+    // removed APIs: they are hidden from the report instead of showing up
+    // as "missing in vm" rows. Files present in the vm tree are always
+    // compared and reported normally, so a resurrected file still shows.
+    private final List<String> excludePatterns = new ArrayList<String>();
+
+    private int excludedCount = 0;
+
     private String vmSpecificTag = "@vm-specific";
 
     // represent an unsubmitted classpath bugfix 
@@ -234,7 +245,10 @@ public class CompareTask extends Task {
                             results.add(new VmSpecificResult(name, vmSpecificFile.getReportName()));
                         } else if (vmFile == null) {
                             // file is not found as vmspecific source, nor as vm source
-                            if (!cpFile.isIgnoreMissing()) {
+                            if (isExcluded(name)) {
+                                // intentionally removed API, hide from report
+                                countExcluded();
+                            } else if (!cpFile.isIgnoreMissing()) {
                                 results.add(new MissingResult(name, cpFile.getReportName(), type, getFlags(cpFile)));
                             }
                         } else if (cpFile == null) {
@@ -381,6 +395,10 @@ public class CompareTask extends Task {
             if (missingInVm > 0) {
                 out.println("Found " + missingInVm + " files missing in vm<br/>");
                 log("Found " + missingInVm + " files missing in vm");
+            }
+            if (excludedCount > 0) {
+                out.println("Hidden " + excludedCount + " intentionally removed files (excludesfile)<br/>");
+                log("Hidden " + excludedCount + " intentionally removed files (excludesfile)");
             }
             if (needsMerge > 0) {
                 out.println("Found " + needsMerge + " files that needs merging<br/>");
@@ -771,5 +789,52 @@ public class CompareTask extends Task {
      */
     public void setType(String type) {
         this.type = type;
+    }
+
+    /**
+     * Sets a file with exclusion patterns, one per line ('#' comments and
+     * blank lines are ignored). Upstream-only files matching one of these
+     * Ant-style path patterns are hidden from the report. See
+     * all/conf/oj-compare-excludes.txt for the removed-API list.
+     *
+     * @param excludesFile file with exclusion patterns
+     */
+    public void setExcludesfile(File excludesFile) {
+        BufferedReader in = null;
+        try {
+            in = new BufferedReader(new FileReader(excludesFile));
+            String line;
+            while ((line = in.readLine()) != null) {
+                line = line.trim();
+                if ((line.length() > 0) && !line.startsWith("#")) {
+                    excludePatterns.add(line);
+                }
+            }
+            log("Loaded " + excludePatterns.size() + " exclusion patterns from " + excludesFile);
+        } catch (IOException ex) {
+            throw new BuildException("Cannot read excludesfile " + excludesFile + ": " + ex, ex);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException ex) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    protected boolean isExcluded(String fileName) {
+        for (int i = 0; i < excludePatterns.size(); i++) {
+            if (org.apache.tools.ant.types.selectors.SelectorUtils.matchPath(
+                    excludePatterns.get(i), fileName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private synchronized void countExcluded() {
+        excludedCount++;
     }
 }
