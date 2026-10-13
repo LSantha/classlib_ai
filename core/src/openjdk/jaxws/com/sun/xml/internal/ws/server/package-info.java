@@ -41,14 +41,14 @@
  * Both of these classes find the appropriate {@link com.sun.xml.internal.ws.server.RuntimeEndpointInfo RuntimeEndpointInfo}
  * and invokes the {@link com.sun.xml.internal.ws.server.Tie#handle(com.sun.xml.internal.ws.api.server.WSConnection,
  * com.sun.xml.internal.ws.spi.runtime.RuntimeEndpointInfo) Tie.handle}
- * method. This method first creates a {@link com.sun.pept.ept.MessageInfo MessageInfo}
+ * method. This method first creates a {@code com.sun.pept.ept.MessageInfo MessageInfo}
  * used to gather inforrmation about the message to be received. A
  * {@link com.sun.xml.internal.ws.server.RuntimeContext RuntimeContext}
  * is then created with the MessageInfo and the {@link com.sun.xml.internal.ws.api.model.SEIModel RuntimeModel}
  * retrieved from the RuntimeEndpointInfo. The RuntimeContext is then
- * stored in the MessageInfo. The {@link com.sun.pept.ept.EPTFactory EPTFactory}
+ * stored in the MessageInfo. The {@code com.sun.pept.ept.EPTFactory EPTFactory}
  * is retrieved from the {@link com.sun.xml.internal.ws.server.EPTFactoryFactoryBase EPTFactoryFactoryBase}
- * and also placed in the MessagInfo. A {@link com.sun.pept.protocol.MessageDispatcher MessageDispatcher}
+ * and also placed in the MessagInfo. A {@code com.sun.pept.protocol.MessageDispatcher MessageDispatcher}
  * is then created and the receive method is invoked. There will be two
  * types of MessageDispatchers for JAX-WS 2.0.1, SOAPMessageDispatcher
  * (one for client and one for the server) and an XMLMessageDispatcher
@@ -131,11 +131,16 @@
  * <UL>
  * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#marshal(BridgeContext, Object, XMLStreamWriter) Bridge.marshal(BridgeContext, Object, XMLStreamWriter)}</P>
  * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#marshal(BridgeContext, Object, Node) Bridge.marshal(BridgeContext, Object, Node)}</P>
- * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#unmarshal(BridgeContext, XMLStreamReader) Object Bridge.unmarshal(BridgeContext, XMLStreamReader)}</P>
- * </UL>
- * 
- * @ArchitectureDocument
- **/
+  * <LI><P>{@link com.sun.xml.internal.bind.api.Bridge#unmarshal(BridgeContext, XMLStreamReader) Object Bridge.unmarshal(BridgeContext, XMLStreamReader)}</P>
+  * </UL>
+  *
+  * <P>JNode specific change: the com.sun.pept.* implementation
+  * (shipped with CORBA) has been removed from the classlib, so the
+  * {@code com.sun.pept} references above are documentation only.</P>
+  *
+  * @vm-specific
+  * @ArchitectureDocument
+  **/
 package com.sun.xml.internal.ws.server;
 
 import com.sun.xml.internal.bind.api.BridgeContext;

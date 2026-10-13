@@ -84,6 +84,11 @@ import javax.tools.ToolProvider;
  * risk.  This code and its internal interfaces are subject to change
  * or deletion without notice.</b></p>
  *
+ * <p>JNode specific change: CORBA has been removed from the classlib,
+ * so the javax.activity, javax.rmi.CORBA and org.omg.* packages have
+ * been removed from the symbol list below.</p>
+ *
+ * @vm-specific
  * @author Peter von der Ah\u00e9
  */
 @SupportedOptions({"com.sun.tools.javac.sym.Jar","com.sun.tools.javac.sym.Dest"})
@@ -319,7 +324,6 @@ public class CreateSymbols extends AbstractProcessor {
             "java.util.zip",
             "javax.accessibility",
             "javax.activation",
-            "javax.activity",
             "javax.annotation",
             "javax.annotation.processing",
             "javax.crypto",
@@ -359,7 +363,6 @@ public class CreateSymbols extends AbstractProcessor {
             "javax.print.attribute.standard",
             "javax.print.event",
             "javax.rmi",
-            "javax.rmi.CORBA",
             "javax.rmi.ssl",
             "javax.script",
             "javax.security.auth",
@@ -432,34 +435,6 @@ public class CreateSymbols extends AbstractProcessor {
             "javax.xml.stream.events",
             "javax.xml.stream.util",
             "org.ietf.jgss",
-            "org.omg.CORBA",
-            "org.omg.CORBA.DynAnyPackage",
-            "org.omg.CORBA.ORBPackage",
-            "org.omg.CORBA.TypeCodePackage",
-            "org.omg.stub.java.rmi",
-            "org.omg.CORBA.portable",
-            "org.omg.CORBA_2_3",
-            "org.omg.CORBA_2_3.portable",
-            "org.omg.CosNaming",
-            "org.omg.CosNaming.NamingContextExtPackage",
-            "org.omg.CosNaming.NamingContextPackage",
-            "org.omg.SendingContext",
-            "org.omg.PortableServer",
-            "org.omg.PortableServer.CurrentPackage",
-            "org.omg.PortableServer.POAPackage",
-            "org.omg.PortableServer.POAManagerPackage",
-            "org.omg.PortableServer.ServantLocatorPackage",
-            "org.omg.PortableServer.portable",
-            "org.omg.PortableInterceptor",
-            "org.omg.PortableInterceptor.ORBInitInfoPackage",
-            "org.omg.Messaging",
-            "org.omg.IOP",
-            "org.omg.IOP.CodecFactoryPackage",
-            "org.omg.IOP.CodecPackage",
-            "org.omg.Dynamic",
-            "org.omg.DynamicAny",
-            "org.omg.DynamicAny.DynAnyPackage",
-            "org.omg.DynamicAny.DynAnyFactoryPackage",
             "org.w3c.dom",
             "org.w3c.dom.events",
             "org.w3c.dom.bootstrap",

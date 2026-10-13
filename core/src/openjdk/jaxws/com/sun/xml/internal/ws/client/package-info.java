@@ -38,23 +38,23 @@
  * <H3>Message Flow</H3>
  * {@link com.sun.xml.internal.ws.client.WebService} provides client view of a Web service.
  * WebService.getPort returns an instance of {@link com.sun.xml.internal.ws.client.EndpointIFInvocationHandler}
- * with {@link com.sun.pept.ept.ContactInfoList} and {@link com.sun.pept.Delegate} 
+ * with {@code com.sun.pept.ept.ContactInfoList} and {@code com.sun.pept.Delegate} 
  * initialized. A method invocation on the port, obtained from WebService, invokes
  * {@link com.sun.xml.internal.ws.client.EndpointIFInvocationHandler#invoke}. This method 
- * then creates a {@link com.sun.pept.ept.MessageInfo} and populates the data 
+ * then creates a {@code com.sun.pept.ept.MessageInfo} and populates the data 
  * (parameters specified by the user) and metadata such as RuntimeContext, RequestContext, 
  * Message Exchange Pattern into this MessageInfo. This method then invokes 
- * {@link com.sun.pept.Delegate#send} and returns the response.
+ * {@code com.sun.pept.Delegate#send} and returns the response.
  * <P></P>
  * The Delegate.send method iterates through the ContactInfoList and picks up the 
- * correct {@link com.sun.pept.ept.ContactInfo} based upon the binding id of 
+ * correct {@code com.sun.pept.ept.ContactInfo} based upon the binding id of 
  * {@link javax.xml.ws.BindingProvider} and sets it on the MessageInfo. After the 
  * Delegate obtains a specific ContactInfo it uses that ContactInfo to obtain a 
- * protocol-specific {@link com.sun.pept.protocol.MessageDispatcher}. There will be 
+ * protocol-specific {@code com.sun.pept.protocol.MessageDispatcher}. There will be 
  * two types of client-side MessageDispatchers for JAX-WS 2.0.1, 
  * {@link com.sun.xml.internal.ws.protocol.soap.client.SOAPMessageDispatcher} and 
  * {@link com.sun.xml.internal.ws.protocol.xml.client.XMLMessageDispatcher}. The Delegate 
- * then invokes {@link com.sun.pept.protocol.MessageDispatcher#send}. The 
+ * then invokes {@code com.sun.pept.protocol.MessageDispatcher#send}. The 
  * MessageDispatcher.send method makes a decision about the synchronous and 
  * asynchronous nature of the message exchange pattern and invokes separate methods
  * accordingly.
@@ -140,11 +140,16 @@
  * <UL>
  * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#marshal(BridgeContext, Object, XMLStreamWriter) Bridge.marshal(BridgeContext, Object, XMLStreamWriter)}</P>
  * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#marshal(BridgeContext, Object, Node) Bridge.marshal(BridgeContext, Object, Node)}</P>
- * 	<LI><P>{@link com.sun.xml.internal.bind.api.Bridge#unmarshal(BridgeContext, XMLStreamReader) Object Bridge.unmarshal(BridgeContext, XMLStreamReader)}</P>
- * </UL>
- * 
- * @ArchitectureDocument
- **/
+  * <LI><P>{@link com.sun.xml.internal.bind.api.Bridge#unmarshal(BridgeContext, XMLStreamReader) Object Bridge.unmarshal(BridgeContext, XMLStreamReader)}</P>
+  * </UL>
+  *
+  * <P>JNode specific change: the com.sun.pept.* implementation
+  * (shipped with CORBA) has been removed from the classlib, so the
+  * {@code com.sun.pept} references above are documentation only.</P>
+  *
+  * @vm-specific
+  * @ArchitectureDocument
+  **/
 package com.sun.xml.internal.ws.client;
 
 import com.sun.xml.internal.bind.api.BridgeContext;

@@ -39,6 +39,12 @@ questions.
     <p>The RMI connector supports both the JRMP and the IIOP transports
       for RMI.</p>
 
+    <p>JNode specific change (<em>@vm-specific</em>): CORBA has been
+      removed from the classlib (org.omg.*, javax.rmi.CORBA,
+      com.sun.corba.*), so only the JRMP transport is supported. All
+      references to IIOP, IOR and COS Naming below no longer apply;
+      RMIIIOPServerImpl has been removed.</p>
+
     <p>Like most connectors in the JMX Remote API, an RMI connector
       usually has an address, which
       is a {@link javax.management.remote.JMXServiceURL
@@ -342,36 +348,6 @@ questions.
       construct an RMI connection directly by using the appropriate
       constructor of {@link javax.management.remote.rmi.RMIConnector
       RMIConnector}.</p>
-
-
-    <h3>Specifying an ORB for the RMI/IIOP connector</h3>
-
-    <p>When using the IIOP transport, the client and server can
-      specify what ORB to use
-      with the attribute <code>java.naming.corba.orb</code>.
-      Connection to the ORB happens at {@link 
-      javax.management.remote.rmi.RMIConnectorServer#start() start} time 
-      for the connector server, and at {@link 
-      javax.management.remote.rmi.RMIConnector#connect(java.util.Map) 
-      connect} time for the connector client.
-      If the <code>java.naming.corba.orb</code> attribute is contained
-      in the environment Map, then its value (an {@link 
-      org.omg.CORBA.ORB ORB}), is used to connect the IIOP Stubs. 
-      Otherwise, a new org.omg.CORBA.ORB is created by calling {@link 
-      org.omg.CORBA.ORB
-      org.omg.CORBA.ORB.init((String[])null,(Properties)null)}.  A
-      later RMI connector client or server in the same JVM can reuse
-      this ORB, or it can create another one in the same way.</p>
-
-     <p>If the <code>java.naming.corba.orb</code> attribute is 
-      specified and does not point to an {@link org.omg.CORBA.ORB ORB},
-      then an <code>{@link java.lang.IllegalArgumentException}</code> 
-      will be thrown.</p>
-
-     <p>The mechanism described here does not apply when the IIOP
-      Remote objects (Stubs or Servers) are created and connected to
-      an ORB manually before being passed to the RMIConnector and
-      RMIConnectorServer.</p>
 
 
     <h3>Dynamic code downloading</h3>

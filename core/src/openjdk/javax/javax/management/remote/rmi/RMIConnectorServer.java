@@ -63,6 +63,13 @@ import javax.naming.NamingException;
  * use this class directly, for example with an {@link RMIServerImpl}
  * object.</p>
  *
+ * <p>JNode specific change: CORBA has been removed from the classlib
+ * (org.omg.*, javax.rmi.CORBA, com.sun.corba.*), so the RMI-IIOP
+ * transport is no longer supported. Only the "rmi" protocol is
+ * recognized; RMIIIOPServerImpl and IIOP stub encoding have been
+ * removed.</p>
+ *
+ * @vm-specific
  * @since 1.5
  */
 public class RMIConnectorServer extends JMXConnectorServer {
@@ -116,8 +123,8 @@ public class RMIConnectorServer extends JMXConnectorServer {
      *
      * @exception MalformedURLException if <code>url</code> does not
      * conform to the syntax for an RMI connector, or if its protocol
-     * is not recognized by this implementation. Only "rmi" and "iiop"
-     * are valid when this constructor is used.
+     * is not recognized by this implementation. Only "rmi"
+     * is valid when this constructor is used.
      *
      * @exception IOException if the connector server cannot be created
      * for some reason or if it is inevitable that its {@link #start()
@@ -150,8 +157,8 @@ public class RMIConnectorServer extends JMXConnectorServer {
      *
      * @exception MalformedURLException if <code>url</code> does not
      * conform to the syntax for an RMI connector, or if its protocol
-     * is not recognized by this implementation. Only "rmi" and "iiop"
-     * are valid when this constructor is used.
+     * is not recognized by this implementation. Only "rmi"
+     * is valid when this constructor is used.
      *
      * @exception IOException if the connector server cannot be created
      * for some reason or if it is inevitable that its {@link #start()
@@ -178,7 +185,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
      *  consistent with the protocol type specified in <var>url</var>.
      *  If this parameter is non null, the protocol type specified by
      *  <var>url</var> is not constrained, and is assumed to be valid.
-     *  Otherwise, only "rmi" and "iiop" will be recognized.
+     *  Otherwise, only "rmi" will be recognized.
      *
      * @param mbeanServer the MBean server to which the new connector
      * server is attached, or null if it will be attached by being
@@ -188,8 +195,8 @@ public class RMIConnectorServer extends JMXConnectorServer {
      *
      * @exception MalformedURLException if <code>url</code> does not
      * conform to the syntax for an RMI connector, or if its protocol
-     * is not recognized by this implementation. Only "rmi" and "iiop"
-     * are recognized when <var>rmiServerImpl</var> is null.
+     * is not recognized by this implementation. Only "rmi"
+     * is recognized when <var>rmiServerImpl</var> is null.
      *
      * @exception IOException if the connector server cannot be created
      * for some reason or if it is inevitable that its {@link #start()
@@ -207,7 +214,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
 	    IllegalArgumentException("Null JMXServiceURL");
 	if (rmiServerImpl == null) {
 	    final String prt = url.getProtocol();
-	    if (prt == null || !(prt.equals("rmi") || prt.equals("iiop"))) {
+	    if (prt == null || !prt.equals("rmi")) {
 		final String msg = "Invalid protocol type: " + prt;
 		throw new MalformedURLException(msg);
 	    }
@@ -297,13 +304,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
      * <li>If an <code>RMIServerImpl</code> was supplied to the
      * constructor, it is used.
      *
-     * <li>Otherwise, if the protocol part of the
-     * <code>JMXServiceURL</code> supplied to the constructor was
-     * <code>iiop</code>, an object of type {@link RMIIIOPServerImpl}
-     * is created.
-     *
-     * <li>Otherwise, if the <code>JMXServiceURL</code>
-     * was null, or its protocol part was <code>rmi</code>, an object
+     * <li>Otherwise, an object
      * of type {@link RMIJRMPServerImpl} is created.
      *
      * <li>Otherwise, the implementation can create an
@@ -322,14 +323,14 @@ public class RMIConnectorServer extends JMXConnectorServer {
      * empty or a single slash (<code>/</code>), then the RMI object
      * will not be bound to a directory.  Instead, a reference to it
      * will be encoded in the URL path of the RMIConnectorServer
-     * address (returned by {@link #getAddress()}).  The encodings for
-     * <code>rmi</code> and <code>iiop</code> are described in the
+     * address (returned by {@link #getAddress()}).  The encoding for
+     * <code>rmi</code> is described in the
      * package documentation for {@link
      * javax.management.remote.rmi}.</p>
      *
      * <p>The behavior when the URL path is neither empty nor a JNDI
-     * directory URL, or when the protocol is neither <code>rmi</code>
-     * nor <code>iiop</code>, is implementation defined, and may
+     * directory URL, or when the protocol is not <code>rmi</code>,
+     * is implementation defined, and may
      * include throwing {@link MalformedURLException} when the
      * connector server is created or when it is started.</p>
      *
@@ -644,16 +645,12 @@ public class RMIConnectorServer extends JMXConnectorServer {
      * Creates a new RMIServerImpl.
      **/
     RMIServerImpl newServer() throws IOException {
-        final boolean iiop = isIiopURL(address,true);
 	final int port;
 	if (address == null)
 	    port = 0;
 	else
 	    port = address.getPort();
-        if (iiop)
-            return newIIOPServer(attributes);
-        else
-            return newJRMPServer(attributes, port);
+        return newJRMPServer(attributes, port);
     }
 
     /**
@@ -669,10 +666,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
 	final int port;
 
 	if (address == null) {
-	    if (rmiServer instanceof javax.rmi.CORBA.Stub)
-		protocol = "iiop";
-	    else
-		protocol = "rmi";
+	    protocol = "rmi";
 	    host = null; // will default to local host name
 	    port = 0;
 	} else {
@@ -691,12 +685,10 @@ public class RMIConnectorServer extends JMXConnectorServer {
         String protocol = directoryURL.getProtocol();
         if (protocol.equals("rmi"))
             return false;
-        else if (protocol.equals("iiop"))
-            return true;
         else if (strict) {
 
             throw new MalformedURLException("URL must have protocol " +
-                                            "\"rmi\" or \"iiop\": \"" +
+                                            "\"rmi\": \"" +
 					    protocol + "\"");
         }
 	return false;
@@ -706,10 +698,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
      * Returns the IOR of the given rmiServer.
      **/
     static String encodeStub(RMIServer rmiServer, Map env) throws IOException {
-        if (rmiServer instanceof javax.rmi.CORBA.Stub)
-	    return "/ior/" + encodeIIOPStub(rmiServer, env);
-	else
-	    return "/stub/" + encodeJRMPStub(rmiServer, env);
+	return "/stub/" + encodeJRMPStub(rmiServer, env);
     }
 
     static String encodeJRMPStub(RMIServer rmiServer, Map env)
@@ -722,25 +711,13 @@ public class RMIConnectorServer extends JMXConnectorServer {
 	return byteArrayToBase64(bytes);
     }
 
-    static String encodeIIOPStub(RMIServer rmiServer, Map env)
-	    throws IOException {
-	try {
-	    javax.rmi.CORBA.Stub stub =
-		(javax.rmi.CORBA.Stub) rmiServer;
-	    return stub._orb().object_to_string(stub);
-	} catch (org.omg.CORBA.BAD_OPERATION x) {
-	    throw newIOException(x.getMessage(), x);
-	}
-    }
-
     /**
      * Object that we will bind to the registry.
      * This object is a stub connected to our RMIServerImpl.
      **/
     private static RMIServer objectToBind(RMIServerImpl rmiServer, Map env)
         throws IOException {
-        return RMIConnector.
-            connectStub((RMIServer)rmiServer.toStub(),env);
+        return (RMIServer)rmiServer.toStub();
     }
 
     private static RMIServerImpl newJRMPServer(Map<String, ?> env, int port)
@@ -750,11 +727,6 @@ public class RMIConnectorServer extends JMXConnectorServer {
         RMIServerSocketFactory ssf = (RMIServerSocketFactory)
             env.get(RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE);
         return new RMIJRMPServerImpl(port, csf, ssf, env);
-    }
-
-    private static RMIServerImpl newIIOPServer(Map<String, ?> env)
-	    throws IOException {
-        return new RMIIIOPServerImpl(env);
     }
 
     private static String byteArrayToBase64(byte[] a) {

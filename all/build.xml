@@ -119,7 +119,6 @@
             <fileset dir="${root.dir}/core/src/classpath/tools" includes="**/*.java"/>
             <fileset dir="${root.dir}/core/src/icedtea" includes="**/*.java"/>
             <fileset dir="${root.dir}/core/src/openjdk/com" includes="**/*.java"/>
-            <fileset dir="${root.dir}/core/src/openjdk/corba" includes="**/*.java"/>
             <fileset dir="${root.dir}/core/src/openjdk/java" includes="**/*.java"/>
             <fileset dir="${root.dir}/core/src/openjdk/javax" includes="**/*.java"/>
             <fileset dir="${root.dir}/core/src/openjdk/jaxws" includes="**/*.java"/>
@@ -493,9 +492,6 @@ clean             Remove all intermediate build results.
                         <patternset refid="cp-includes-pattern"/>
                     </fileset>
                     <fileset dir="${root.dir}/core/src/openjdk/langtools">
-                        <patternset refid="cp-includes-pattern"/>
-                    </fileset>
-                    <fileset dir="${root.dir}/core/src/openjdk/corba">
                         <patternset refid="cp-includes-pattern"/>
                     </fileset>
                 </vmsources>
