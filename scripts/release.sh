@@ -34,8 +34,9 @@ if [ -z "$TAG" ] || [ "$TAG" = "auto" ]; then
   # fetch tags from origin to ensure we consider remote tags
   git fetch --tags origin >/dev/null 2>&1 || true
   max=0
-  # list matching tags (local) and compute numeric suffix max
-  for t in $(git tag --list "${prefix}*"); do
+  # list matching tags (remote, via ls-remote) and compute numeric suffix max
+  # (use remote tags so a fresh clone with no local tags cannot collide)
+  for t in $(git ls-remote --tags origin 2>/dev/null | sed 's|.*refs/tags/||' | grep "^${prefix}"); do
     # extract numeric suffix after last underscore
     n=$(echo "$t" | awk -F'_' '{print $NF}' | sed 's/^0*//')
     [ -z "$n" ] && n=0
@@ -106,18 +107,17 @@ echo "On branch $BRANCH"
 
 if [ "$DRY_RUN" = true ]; then
   echo "DRY RUN: would create tag $TAG and push it"
-else
-  echo "Creating annotated tag $TAG"
-  git tag -a "$TAG" -m "Release $TAG"
-  git push origin "$TAG"
 fi
 
 # Build artifacts using the existing build script. The Ant build expects java.runtime.version contains 1.6;
 # we pass -Djava.runtime.version=1.6 to avoid failing on modern JDKs.
+# NOTE: the tag is only created after a successful build so a failed build
+# cannot leave a pushed tag with no release.
 echo "Building artifacts (Ant targets: classlib-pack, classlib-src-bz)"
 if [ "$DRY_RUN" = true ]; then
   echo "DRY RUN: ./build.sh -Djava.runtime.version=1.6 classlib-pack classlib-src-bz"
 else
+  echo "WARNING: bypassing the java.runtime.version=1.6 check (legacy Ant requirement)" >&2
   ./build.sh -Djava.runtime.version=1.6 classlib-pack classlib-src-bz
 fi
 
@@ -125,6 +125,40 @@ ART_DIR="all/build"
 # Only upload the actual build artifacts to GitHub Releases. FTP metadata (`ftp.properties`) is
 # internal to the legacy FTP deployment and should not be attached to GH releases.
 ARTS="${ART_DIR}/classlib.pack.gz ${ART_DIR}/classlib-src.jar.bz2"
+
+# Verify the pack200 artifact matches the freshly built jar: the sibling
+# (jnode_ai) downloads and unpacks classlib.pack.gz, so a stale or
+# mismatched pack would boot with a classlib that does not match the jar.
+# Note: pack200 is lossy on zip metadata (recompresses), so compare the
+# class entry names + counts, not byte-level md5.
+echo "Verifying classlib.pack.gz against classlib.jar"
+PACK_OK=true
+if [ "$DRY_RUN" = true ]; then
+  echo "DRY RUN: would verify pack200 artifact vs classlib.jar"
+elif [ ! -f "${ART_DIR}/classlib.pack.gz" ] || [ ! -f "${ART_DIR}/classlib.jar" ]; then
+  echo "ERROR: classlib.pack.gz or classlib.jar missing; aborting release" >&2
+  PACK_OK=false
+elif command -v unpack200 >/dev/null 2>&1; then
+  rm -rf /tmp/classlib-pack-verify && mkdir -p /tmp/classlib-pack-verify
+  unpack200 "${ART_DIR}/classlib.pack.gz" /tmp/classlib-pack-verify/classlib.jar
+  # compare entry names + counts
+  unzip -l "${ART_DIR}/classlib.jar" | awk '{print $4}' | grep -v '^$' | sort > /tmp/cb-jar-entries.txt
+  unzip -l /tmp/classlib-pack-verify/classlib.jar | awk '{print $4}' | grep -v '^$' | sort > /tmp/cb-pack-entries.txt
+  JAR_N=$(wc -l < /tmp/cb-jar-entries.txt); PACK_N=$(wc -l < /tmp/cb-pack-entries.txt)
+  if [ "$JAR_N" = "$PACK_N" ] && diff -q /tmp/cb-jar-entries.txt /tmp/cb-pack-entries.txt >/dev/null; then
+    echo " - OK: unpacked pack matches classlib.jar ($JAR_N entries)"
+    rm -rf /tmp/classlib-pack-verify /tmp/cb-jar-entries.txt /tmp/cb-pack-entries.txt
+  else
+    echo "ERROR: unpacked pack ($PACK_N entries) != classlib.jar ($JAR_N entries) or names differ" >&2
+    PACK_OK=false
+  fi
+else
+  echo " - warning: unpack200 not available; skipping pack-vs-jar verification" >&2
+fi
+if [ "$PACK_OK" = false ]; then
+  echo "Release aborted: artifact verification failed" >&2
+  exit 1
+fi
 
 # Generate MD5 checksum files for artifacts so GH releases can include integrity data.
 echo "Generating MD5 checksums (if md5sum available)"
@@ -152,6 +186,12 @@ if [ "$DRY_RUN" = true ]; then
   echo "DRY RUN: gh release create $GH_REPO_FLAG $TAG --title $TAG --notes 'Release $TAG' ${ARTS}";
   exit 0
 fi
+
+# Create and push the annotated tag only now that the build and
+# verification succeeded.
+echo "Creating annotated tag $TAG"
+git tag -a "$TAG" -m "Release $TAG"
+git push origin "$TAG"
 
 echo "Creating GitHub release and uploading assets"
 # Create release and upload artifacts (gh will fail if an asset file does not exist; we upload only existing files)
