@@ -20,6 +20,10 @@
 
 package java.io;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import org.jnode.annotation.SharedStatics;
 import org.jnode.java.io.VMFileHandle;
 import org.jnode.java.io.VMFileSystemAPI;
@@ -36,6 +40,41 @@ public class VMIOUtils {
 	/** The filesystem API of JNode */
 	private static VMFileSystemAPI api;
 	private static Object token;
+
+	/**
+	 * JNode: association between an open {@link FileDescriptor} and the
+	 * {@link VMFileHandle} that backs it.
+	 * <p>
+	 * The adopted OpenJDK streams (FileInputStream, FileOutputStream,
+	 * RandomAccessFile) are kept byte-identical to upstream and therefore
+	 * have no field to hold the handle. The association lives here instead,
+	 * keyed weakly by the descriptor, so streams that share one descriptor
+	 * also share the handle, and the entry disappears when the descriptor
+	 * becomes unreachable. Entries are also removed explicitly by the
+	 * streams' close0() native replacement.
+	 */
+	private static final Map<FileDescriptor, VMFileHandle> handles =
+		Collections.synchronizedMap(new WeakHashMap<FileDescriptor, VMFileHandle>());
+
+	/**
+	 * Gets the JNode file handle associated with the given descriptor,
+	 * or null if the descriptor is not connected to a file.
+	 */
+	public static VMFileHandle getHandle(FileDescriptor fd) {
+		return handles.get(fd);
+	}
+
+	/**
+	 * Associates a JNode file handle with the given descriptor.
+	 * A null handle removes the association.
+	 */
+	public static void setHandle(FileDescriptor fd, VMFileHandle handle) {
+		if (handle == null) {
+			handles.remove(fd);
+		} else {
+			handles.put(fd, handle);
+		}
+	}
 
     /**
 	 * Gets the JNode FileSystemService instance.
