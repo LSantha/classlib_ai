@@ -14,6 +14,7 @@
 
   <!-- the sources that we have to compile -->
   <path id="classpath-sources">
+	<pathelement location="${my-build.dir}/gen-src"/>
 	<pathelement location="${my-src.dir}/classpath/gnu"/>
 	<pathelement location="${my-src.dir}/classpath/java"/>
 	<pathelement location="${my-src.dir}/classpath/javax"/>
@@ -51,11 +52,40 @@
     </copy>
   </target>
 
-  <target name="pre-compile" depends="prepare">
+  <target name="pre-compile" depends="prepare, generate-buffers">
     <jnode.compile>
       <src refid="classpath-sources" />
       <classpath refid="my-cp"/>
     </jnode.compile>
+  </target>
+
+  <!-- Generate the concrete java.nio buffer classes from the OpenJDK
+       templates (X-Buffer.java / Heap-X-Buffer.java) using the vendored
+       SPP preprocessor + genBuffer.sh. Outputs go to ${my-gen-src.dir}
+       which is prepended to the classpath-sources path so these generated
+       java.nio.Buffer* classes shadow nothing (the GNU Classpath ones are
+       deleted) and are found by the compiler. -->
+  <target name="generate-buffers" depends="prepare">
+    <property name="my-gen-src.dir" value="${my-build.dir}/gen-src"/>
+    <property name="my-gen-classes.dir" value="${my-build.dir}/gen-classes"/>
+    <mkdir dir="${my-gen-src.dir}"/>
+    <mkdir dir="${my-gen-classes.dir}"/>
+    <!-- Compile the SPP preprocessor (build.tools.spp.Spp) -->
+    <javac srcdir="${my-src.dir}/openjdk/tools/spp"
+           destdir="${my-gen-classes.dir}"
+           debug="off" optimize="on" fork="on"
+           includeJavaRuntime="true"
+           target="${java.target}" source="${java.source}"
+           encoding="${java.encoding}"/>
+    <!-- Run the generator (writes ByteBuffer.java, CharBuffer.java, ... into gen-src) -->
+    <exec executable="sh" failonerror="true">
+      <arg value="${my-src.dir}/openjdk/tools/nio/gen-buffers.sh"/>
+      <arg value="${my-gen-classes.dir}"/>
+      <arg value="${my-src.dir}/openjdk/tools/nio"/>
+      <arg value="${my-gen-src.dir}/java/nio"/>
+      <!-- SPP must run on the same JVM that builds the classlib -->
+      <arg value="${java.home}/bin/java"/>
+    </exec>
   </target>
 
   <!-- Compile all subproject java files -->
