@@ -1,0 +1,63 @@
+# Exclusion list for the cp-compare report
+# (CompareTask 'excludesfile' attribute, classpath side, all/build.xml).
+#
+# Upstream-only files matching these patterns are hidden from the report
+# instead of showing up as "Exists only in classpath" rows. Use this for
+# GNU Classpath APIs that were INTENTIONALLY removed from the classlib
+# and must never be re-synced.
+#
+# Patterns match the tree-relative file names of the upstream classpath
+# checkout ('/' separators). Two granularities are supported:
+#
+#   package granularity : gnu/java/nio/charset/**
+#   per-class granularity : java/nio/ByteBufferImpl.java
+#
+# Rules the task enforces:
+# - exclusions apply ONLY to upstream-only rows. Files present in the vm
+#   tree are always compared and reported normally, so a resurrected file
+#   still shows up (as "Exists only in vm").
+# - keep patterns tight: siblings that are KEPT must keep comparing,
+#   e.g. java/nio/channels/** is NOT covered by java/nio/* below.
+#
+# --- java.nio buffers: replaced by the OpenJDK SPP-generated buffers
+#     (core/src/openjdk/tools/nio templates, built into core/build/gen-src).
+#     The GNU buffer implementations were deleted wholesale; AbstractBuffer,
+#     Buffer, *Buffer(Impl), *ViewBufferImpl, ByteBufferHelper,
+#     VMDirectByteBuffer and the MappedByteBufferImpl are gone. ---
+java/nio/Buffer.java
+java/nio/BufferOverflowException.java
+java/nio/BufferUnderflowException.java
+java/nio/ByteBuffer.java
+java/nio/ByteBufferHelper.java
+java/nio/ByteBufferImpl.java
+java/nio/ByteOrder.java
+java/nio/CharBuffer.java
+java/nio/CharBufferImpl.java
+java/nio/CharSequenceBuffer.java
+java/nio/CharViewBufferImpl.java
+java/nio/DirectByteBufferImpl.java
+java/nio/DoubleBuffer.java
+java/nio/DoubleBufferImpl.java
+java/nio/DoubleViewBufferImpl.java
+java/nio/FloatBuffer.java
+java/nio/FloatBufferImpl.java
+java/nio/FloatViewBufferImpl.java
+java/nio/IntBuffer.java
+java/nio/IntBufferImpl.java
+java/nio/IntViewBufferImpl.java
+java/nio/InvalidMarkException.java
+java/nio/LongBuffer.java
+java/nio/LongBufferImpl.java
+java/nio/LongViewBufferImpl.java
+java/nio/MappedByteBuffer.java
+java/nio/MappedByteBufferImpl.java
+java/nio/ReadOnlyBufferException.java
+java/nio/ShortBuffer.java
+java/nio/ShortBufferImpl.java
+java/nio/ShortViewBufferImpl.java
+java/nio/VMDirectByteBuffer.java
+# --- GNU charset package: the classlib now uses OpenJDK's
+#     java.nio.charset + sun.nio.cs providers. All GNU canonical charset
+#     names stay resolvable there (as canonical or case-insensitive alias),
+#     so the whole gnu.java.nio.charset package was deleted. ---
+gnu/java/nio/charset/**

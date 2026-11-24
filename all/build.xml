@@ -383,7 +383,8 @@ clean             Remove all intermediate build results.
         </patternset>
 
         <delete dir="${build.dir}/classpath-compare"/>
-        <cp-compare destdir="${build.dir}/classpath-compare" type="classpath">
+        <cp-compare destdir="${build.dir}/classpath-compare" type="classpath"
+                     excludesfile="${root.dir}/all/conf/cp-compare-excludes.txt">
             <vmsources>
                 <fileset dir="${root.dir}/core/src/classpath/gnu">
                     <patternset refid="cp-includes-pattern"/>
