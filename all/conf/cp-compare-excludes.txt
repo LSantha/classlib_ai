@@ -19,6 +19,14 @@
 # - keep patterns tight: siblings that are KEPT must keep comparing,
 #   e.g. java/nio/channels/** is NOT covered by java/nio/* below.
 #
+# --- java.lang.Thread: replaced by the OpenJDK Thread
+#     (core/src/openjdk/java/java/lang/Thread.java, JNode-ported:
+#      String name, appended vmThread/isolatedStatics fields). The GNU
+#      Classpath Thread was deleted, so every future sync would otherwise
+#      report it as a missing file. Note that sun/.* and the classlib's own
+#      Thread.java variants are unaffected. ---
+java/lang/Thread.java
+
 # --- java.nio buffers: replaced by the OpenJDK SPP-generated buffers
 #     (core/src/openjdk/tools/nio templates, built into core/build/gen-src).
 #     The GNU buffer implementations were deleted wholesale; AbstractBuffer,
